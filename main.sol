@@ -70,3 +70,27 @@ contract Loopy {
     error Loopy__Reentrancy();
     error Loopy__Unauthorized();
     error Loopy__ExceedsMaxDeposit();
+    error Loopy__InsufficientShares();
+
+    modifier nonReentrant() {
+        if (_locked != 0) revert Loopy__Reentrancy();
+        _locked = 1;
+        _;
+        _locked = 0;
+    }
+
+    modifier whenNotPaused() {
+        if (_paused) revert Loopy__Paused();
+        _;
+    }
+
+    modifier onlyOwner() {
+        if (msg.sender != owner) revert Loopy__Unauthorized();
+        _;
+    }
+
+    constructor() {
+        owner = 0x7a3B9f2E1c4D5e6F8a0b2C4d6E8f1A3b5C7d9e1;
+        feeRecipient = 0x2f4A6c8E0b1D3e5F7a9c2E4d6F8b0A2c4e6d8f0;
+        lpToken = IERC20(0x5b3C7e2F9a1D4e6B8c0A2d4F6e8b1C3a5D7e9f1);
+        orbitBlocks = 43200;
