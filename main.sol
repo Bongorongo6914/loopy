@@ -190,3 +190,27 @@ contract Loopy {
 
         lpToken.transfer(msg.sender, assets);
         emit Withdraw(msg.sender, ringIndex, assets, shares);
+        return assets;
+    }
+
+    function orbit(uint256 ringIndex, uint256 yieldAmount) external nonReentrant whenNotPaused {
+        if (ringIndex >= RING_COUNT) revert Loopy__InvalidRing();
+        if (yieldAmount == 0) revert Loopy__ZeroAmount();
+
+        lpToken.transferFrom(msg.sender, address(this), yieldAmount);
+
+        RingConfig memory cfg = _ringConfigs[ringIndex];
+        uint256 fee = (yieldAmount * cfg.feeBps) / BPS_DENOM;
+        uint256 netYield = yieldAmount - fee;
+
+        if (fee > 0) {
+            lpToken.transfer(feeRecipient, fee);
+        }
+
+        RingState storage state = _ringStates[ringIndex];
+        if (state.totalShares > 0) {
+            uint256 accDelta = (netYield * 1e18 * cfg.orbitMultiplier) / (state.totalShares * 1e18);
+            state.accumulatedYieldPerShare += accDelta;
+        }
+        state.lastOrbitBlock = block.number;
+
