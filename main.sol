@@ -118,3 +118,27 @@ contract Loopy {
             weightBps: 1100,
             feeBps: 94,
             minLockBlocks: 57600,
+            orbitMultiplier: 18e17
+        });
+        _ringConfigs[4] = RingConfig({
+            weightBps: 500,
+            feeBps: 112,
+            minLockBlocks: 72000,
+            orbitMultiplier: 22e17
+        });
+    }
+
+    function deposit(uint256 ringIndex, uint256 assets) external nonReentrant whenNotPaused returns (uint256 shares) {
+        if (ringIndex >= RING_COUNT) revert Loopy__InvalidRing();
+        if (assets < MIN_DEPOSIT) revert Loopy__ZeroAmount();
+
+        RingState storage state = _ringStates[ringIndex];
+        uint256 cap = maxDepositPerRing;
+        if (state.totalDeposited + assets > cap) revert Loopy__ExceedsMaxDeposit();
+
+        lpToken.transferFrom(msg.sender, address(this), assets);
+
+        if (state.totalShares == 0) {
+            shares = assets;
+        } else {
+            shares = (assets * state.totalShares) / state.totalDeposited;
