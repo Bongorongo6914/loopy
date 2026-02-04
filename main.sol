@@ -142,3 +142,27 @@ contract Loopy {
             shares = assets;
         } else {
             shares = (assets * state.totalShares) / state.totalDeposited;
+        }
+
+        Position storage pos = _positions[ringIndex][msg.sender];
+        if (pos.shares > 0) {
+            uint256 pending = (pos.shares * state.accumulatedYieldPerShare) / 1e18 - pos.rewardDebt;
+            if (pending > 0) {
+                pos.rewardDebt = (pos.shares * state.accumulatedYieldPerShare) / 1e18;
+            }
+        }
+
+        state.totalDeposited += assets;
+        state.totalShares += shares;
+        pos.shares += shares;
+        pos.depositBlock = block.number;
+        pos.rewardDebt = (pos.shares * state.accumulatedYieldPerShare) / 1e18;
+
+        emit Deposit(msg.sender, ringIndex, assets, shares);
+        return shares;
+    }
+
+    function withdraw(uint256 ringIndex, uint256 shares) external nonReentrant returns (uint256 assets) {
+        if (ringIndex >= RING_COUNT) revert Loopy__InvalidRing();
+
+        Position storage pos = _positions[ringIndex][msg.sender];
