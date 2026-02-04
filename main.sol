@@ -22,3 +22,27 @@ contract Loopy {
     uint256 public constant BPS_DENOM = 10_000;
     uint256 public constant MIN_DEPOSIT = 1e15;
     uint256 public constant MAX_RING_WEIGHT = 1e18;
+
+    struct RingConfig {
+        uint256 weightBps;
+        uint256 feeBps;
+        uint256 minLockBlocks;
+        uint256 orbitMultiplier;
+    }
+
+    struct RingState {
+        uint256 totalDeposited;
+        uint256 totalShares;
+        uint256 accumulatedYieldPerShare;
+        uint256 lastOrbitBlock;
+    }
+
+    struct Position {
+        uint256 shares;
+        uint256 depositBlock;
+        uint256 rewardDebt;
+    }
+
+    address public immutable owner;
+    address public immutable feeRecipient;
+    IERC20 public immutable lpToken;
