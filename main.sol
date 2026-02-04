@@ -334,3 +334,27 @@ contract Loopy {
             for (uint256 i = 0; i < RING_COUNT; i++) {
                 totalLocked += _ringStates[i].totalDeposited;
             }
+            uint256 bal = IERC20(token).balanceOf(address(this));
+            if (bal > totalLocked) {
+                uint256 excess = bal - totalLocked;
+                IERC20(token).transfer(feeRecipient, excess);
+                emit FeeSweep(token, excess);
+            }
+        } else {
+            uint256 bal = IERC20(token).balanceOf(address(this));
+            if (bal > 0) {
+                IERC20(token).transfer(feeRecipient, bal);
+                emit FeeSweep(token, bal);
+            }
+        }
+    }
+
+    function totalDepositedAcrossRings() external view returns (uint256 total) {
+        for (uint256 i = 0; i < RING_COUNT; i++) {
+            total += _ringStates[i].totalDeposited;
+        }
+    }
+
+    function canWithdraw(uint256 ringIndex, address user) external view returns (bool) {
+        if (ringIndex >= RING_COUNT) return false;
+        Position storage pos = _positions[ringIndex][user];
