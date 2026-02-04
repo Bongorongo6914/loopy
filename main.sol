@@ -310,3 +310,27 @@ contract Loopy {
         uint256 totalDeposited,
         uint256 totalShares,
         uint256 accumulatedYieldPerShare,
+        uint256 lastOrbitBlock
+    ) {
+        if (ringIndex >= RING_COUNT) return (0, 0, 0, 0);
+        RingState storage s = _ringStates[ringIndex];
+        return (s.totalDeposited, s.totalShares, s.accumulatedYieldPerShare, s.lastOrbitBlock);
+    }
+
+    function sharesToAssets(uint256 ringIndex, uint256 shares) external view returns (uint256) {
+        if (ringIndex >= RING_COUNT) return 0;
+        RingState storage state = _ringStates[ringIndex];
+        return state.totalShares == 0 ? 0 : (shares * state.totalDeposited) / state.totalShares;
+    }
+
+    function setPaused(bool paused_) external onlyOwner {
+        _paused = paused_;
+        emit PauseToggled(paused_);
+    }
+
+    function sweepFees(address token) external onlyOwner {
+        if (token == address(lpToken)) {
+            uint256 totalLocked = 0;
+            for (uint256 i = 0; i < RING_COUNT; i++) {
+                totalLocked += _ringStates[i].totalDeposited;
+            }
