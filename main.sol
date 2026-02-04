@@ -262,3 +262,27 @@ contract Loopy {
             ? assets
             : (assets * toState.totalShares) / toState.totalDeposited;
 
+        Position storage toPos = _positions[toRing][msg.sender];
+        if (toPos.shares > 0) {
+            toPos.rewardDebt = (toPos.shares * toState.accumulatedYieldPerShare) / 1e18;
+        }
+
+        toState.totalDeposited += assets;
+        toState.totalShares += newShares;
+        toPos.shares += newShares;
+        toPos.depositBlock = block.number;
+        toPos.rewardDebt = (toPos.shares * toState.accumulatedYieldPerShare) / 1e18;
+
+        if (pending > 0) {
+            uint256 bal = lpToken.balanceOf(address(this));
+            if (pending <= bal) lpToken.transfer(msg.sender, pending);
+        }
+
+        emit RingMigrate(msg.sender, fromRing, toRing, shares);
+    }
+
+    function pendingReward(uint256 ringIndex, address user) external view returns (uint256) {
+        if (ringIndex >= RING_COUNT) return 0;
+        Position storage pos = _positions[ringIndex][user];
+        RingState storage state = _ringStates[ringIndex];
+        uint256 acc = state.accumulatedYieldPerShare;
