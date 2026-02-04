@@ -166,3 +166,27 @@ contract Loopy {
         if (ringIndex >= RING_COUNT) revert Loopy__InvalidRing();
 
         Position storage pos = _positions[ringIndex][msg.sender];
+        if (shares > pos.shares) revert Loopy__InsufficientShares();
+
+        RingConfig memory cfg = _ringConfigs[ringIndex];
+        if (block.number < pos.depositBlock + cfg.minLockBlocks) revert Loopy__Locked();
+
+        RingState storage state = _ringStates[ringIndex];
+        assets = state.totalDeposited == 0 ? 0 : (shares * state.totalDeposited) / state.totalShares;
+
+        uint256 pending = (pos.shares * state.accumulatedYieldPerShare) / 1e18 - pos.rewardDebt;
+        pos.rewardDebt = ((pos.shares - shares) * state.accumulatedYieldPerShare) / 1e18;
+        pos.shares -= shares;
+
+        state.totalShares -= shares;
+        state.totalDeposited -= assets;
+
+        if (pending > 0) {
+            uint256 bal = lpToken.balanceOf(address(this));
+            if (pending <= bal) {
+                lpToken.transfer(msg.sender, pending);
+            }
+        }
+
+        lpToken.transfer(msg.sender, assets);
+        emit Withdraw(msg.sender, ringIndex, assets, shares);
