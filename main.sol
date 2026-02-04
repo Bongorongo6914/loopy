@@ -214,3 +214,27 @@ contract Loopy {
         }
         state.lastOrbitBlock = block.number;
 
+        emit Orbit(ringIndex, yieldAmount, fee);
+    }
+
+    function harvest(uint256 ringIndex) external nonReentrant {
+        if (ringIndex >= RING_COUNT) revert Loopy__InvalidRing();
+
+        Position storage pos = _positions[ringIndex][msg.sender];
+        RingState storage state = _ringStates[ringIndex];
+
+        uint256 pending = (pos.shares * state.accumulatedYieldPerShare) / 1e18 - pos.rewardDebt;
+        if (pending == 0) return;
+
+        pos.rewardDebt = (pos.shares * state.accumulatedYieldPerShare) / 1e18;
+
+        uint256 bal = lpToken.balanceOf(address(this));
+        uint256 send = pending > bal ? bal : pending;
+        if (send > 0) {
+            lpToken.transfer(msg.sender, send);
+        }
+    }
+
+    function migrateRing(uint256 fromRing, uint256 toRing, uint256 shares) external nonReentrant whenNotPaused {
+        if (fromRing >= RING_COUNT || toRing >= RING_COUNT || fromRing == toRing) revert Loopy__InvalidRing();
+
