@@ -94,3 +94,27 @@ contract Loopy {
         feeRecipient = 0x2f4A6c8E0b1D3e5F7a9c2E4d6F8b0A2c4e6d8f0;
         lpToken = IERC20(0x5b3C7e2F9a1D4e6B8c0A2d4F6e8b1C3a5D7e9f1);
         orbitBlocks = 43200;
+        maxDepositPerRing = 500_000 * 1e18;
+
+        _ringConfigs[0] = RingConfig({
+            weightBps: 3400,
+            feeBps: 47,
+            minLockBlocks: 14400,
+            orbitMultiplier: 1e18
+        });
+        _ringConfigs[1] = RingConfig({
+            weightBps: 2800,
+            feeBps: 63,
+            minLockBlocks: 28800,
+            orbitMultiplier: 12e17
+        });
+        _ringConfigs[2] = RingConfig({
+            weightBps: 2200,
+            feeBps: 81,
+            minLockBlocks: 43200,
+            orbitMultiplier: 15e17
+        });
+        _ringConfigs[3] = RingConfig({
+            weightBps: 1100,
+            feeBps: 94,
+            minLockBlocks: 57600,
