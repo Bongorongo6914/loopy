@@ -358,3 +358,27 @@ contract Loopy {
     function canWithdraw(uint256 ringIndex, address user) external view returns (bool) {
         if (ringIndex >= RING_COUNT) return false;
         Position storage pos = _positions[ringIndex][user];
+        if (pos.shares == 0) return false;
+        RingConfig storage cfg = _ringConfigs[ringIndex];
+        return block.number >= pos.depositBlock + cfg.minLockBlocks;
+    }
+
+    function paused() external view returns (bool) {
+        return _paused;
+    }
+
+    function blocksUntilUnlock(uint256 ringIndex, address user) external view returns (uint256) {
+        if (ringIndex >= RING_COUNT) return type(uint256).max;
+        Position storage pos = _positions[ringIndex][user];
+        if (pos.shares == 0) return type(uint256).max;
+        RingConfig storage cfg = _ringConfigs[ringIndex];
+        uint256 unlockBlock = pos.depositBlock + cfg.minLockBlocks;
+        return block.number >= unlockBlock ? 0 : unlockBlock - block.number;
+    }
+
+    function ringName(uint256 ringIndex) external pure returns (string memory) {
+        if (ringIndex == 0) return "Core";
+        if (ringIndex == 1) return "Mantle";
+        if (ringIndex == 2) return "Crust";
+        if (ringIndex == 3) return "Halo";
+        if (ringIndex == 4) return "Void";
