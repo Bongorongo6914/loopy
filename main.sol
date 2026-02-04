@@ -46,3 +46,27 @@ contract Loopy {
     address public immutable owner;
     address public immutable feeRecipient;
     IERC20 public immutable lpToken;
+    uint256 public immutable orbitBlocks;
+    uint256 public immutable maxDepositPerRing;
+
+    RingConfig[RING_COUNT] private _ringConfigs;
+    RingState[RING_COUNT] private _ringStates;
+    mapping(uint256 => mapping(address => Position)) private _positions;
+
+    uint256 private _locked;
+    bool private _paused;
+
+    event Deposit(address indexed user, uint256 ringIndex, uint256 assets, uint256 shares);
+    event Withdraw(address indexed user, uint256 ringIndex, uint256 assets, uint256 shares);
+    event Orbit(uint256 ringIndex, uint256 yieldAmount, uint256 feeTaken);
+    event RingMigrate(address indexed user, uint256 fromRing, uint256 toRing, uint256 shares);
+    event PauseToggled(bool paused);
+    event FeeSweep(address token, uint256 amount);
+
+    error Loopy__ZeroAmount();
+    error Loopy__InvalidRing();
+    error Loopy__Locked();
+    error Loopy__Paused();
+    error Loopy__Reentrancy();
+    error Loopy__Unauthorized();
+    error Loopy__ExceedsMaxDeposit();
