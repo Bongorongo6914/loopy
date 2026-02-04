@@ -238,3 +238,27 @@ contract Loopy {
     function migrateRing(uint256 fromRing, uint256 toRing, uint256 shares) external nonReentrant whenNotPaused {
         if (fromRing >= RING_COUNT || toRing >= RING_COUNT || fromRing == toRing) revert Loopy__InvalidRing();
 
+        Position storage fromPos = _positions[fromRing][msg.sender];
+        if (shares > fromPos.shares) revert Loopy__InsufficientShares();
+
+        RingConfig memory fromCfg = _ringConfigs[fromRing];
+        if (block.number < fromPos.depositBlock + fromCfg.minLockBlocks) revert Loopy__Locked();
+
+        RingState storage fromState = _ringStates[fromRing];
+        uint256 assets = (shares * fromState.totalDeposited) / fromState.totalShares;
+
+        RingState storage toState = _ringStates[toRing];
+        uint256 cap = maxDepositPerRing;
+        if (toState.totalDeposited + assets > cap) revert Loopy__ExceedsMaxDeposit();
+
+        uint256 pending = (fromPos.shares * fromState.accumulatedYieldPerShare) / 1e18 - fromPos.rewardDebt;
+        fromPos.rewardDebt = ((fromPos.shares - shares) * fromState.accumulatedYieldPerShare) / 1e18;
+        fromPos.shares -= shares;
+
+        fromState.totalShares -= shares;
+        fromState.totalDeposited -= assets;
+
+        uint256 newShares = toState.totalShares == 0
+            ? assets
+            : (assets * toState.totalShares) / toState.totalDeposited;
+
