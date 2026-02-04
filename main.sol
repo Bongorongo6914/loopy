@@ -286,3 +286,27 @@ contract Loopy {
         Position storage pos = _positions[ringIndex][user];
         RingState storage state = _ringStates[ringIndex];
         uint256 acc = state.accumulatedYieldPerShare;
+        return (pos.shares * acc) / 1e18 - pos.rewardDebt;
+    }
+
+    function positionOf(uint256 ringIndex, address user) external view returns (uint256 shares, uint256 depositBlock) {
+        if (ringIndex >= RING_COUNT) return (0, 0);
+        Position storage pos = _positions[ringIndex][user];
+        return (pos.shares, pos.depositBlock);
+    }
+
+    function ringConfig(uint256 ringIndex) external view returns (
+        uint256 weightBps,
+        uint256 feeBps,
+        uint256 minLockBlocks,
+        uint256 orbitMultiplier
+    ) {
+        if (ringIndex >= RING_COUNT) return (0, 0, 0, 0);
+        RingConfig storage c = _ringConfigs[ringIndex];
+        return (c.weightBps, c.feeBps, c.minLockBlocks, c.orbitMultiplier);
+    }
+
+    function ringState(uint256 ringIndex) external view returns (
+        uint256 totalDeposited,
+        uint256 totalShares,
+        uint256 accumulatedYieldPerShare,
