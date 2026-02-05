@@ -406,3 +406,27 @@ contract Loopy {
         uint256[RING_COUNT] memory totalDepositedPerRing,
         uint256[RING_COUNT] memory totalSharesPerRing,
         uint256 grandTotalDeposited
+    ) {
+        for (uint256 i = 0; i < RING_COUNT; i++) {
+            RingState storage s = _ringStates[i];
+            totalDepositedPerRing[i] = s.totalDeposited;
+            totalSharesPerRing[i] = s.totalShares;
+            grandTotalDeposited += s.totalDeposited;
+        }
+    }
+
+    function tierMultiplierBps(uint256 ringIndex) external view returns (uint256) {
+        if (ringIndex >= RING_COUNT) return 0;
+        RingConfig storage c = _ringConfigs[ringIndex];
+        return (c.orbitMultiplier * BPS_DENOM) / 1e18;
+    }
+
+    function getRingIndices() external pure returns (uint256[] memory) {
+        uint256[] memory indices = new uint256[](RING_COUNT);
+        for (uint256 i = 0; i < RING_COUNT; i++) {
+            indices[i] = i;
+        }
+        return indices;
+    }
+}
+
