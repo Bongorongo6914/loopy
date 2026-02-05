@@ -382,3 +382,27 @@ contract Loopy {
         if (ringIndex == 2) return "Crust";
         if (ringIndex == 3) return "Halo";
         if (ringIndex == 4) return "Void";
+        return "";
+    }
+
+    function userSnapshot(address user) external view returns (
+        uint256[RING_COUNT] memory sharesPerRing,
+        uint256[RING_COUNT] memory pendingPerRing,
+        uint256 totalShares,
+        uint256 totalPending
+    ) {
+        for (uint256 i = 0; i < RING_COUNT; i++) {
+            Position storage pos = _positions[i][user];
+            RingState storage state = _ringStates[i];
+            sharesPerRing[i] = pos.shares;
+            uint256 pending = (pos.shares * state.accumulatedYieldPerShare) / 1e18 - pos.rewardDebt;
+            pendingPerRing[i] = pending;
+            totalShares += pos.shares;
+            totalPending += pending;
+        }
+    }
+
+    function ringSnapshot() external view returns (
+        uint256[RING_COUNT] memory totalDepositedPerRing,
+        uint256[RING_COUNT] memory totalSharesPerRing,
+        uint256 grandTotalDeposited
